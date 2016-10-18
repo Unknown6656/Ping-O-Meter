@@ -1,0 +1,119 @@
+/* @import '../font/stylesheet.css'; */
+@charset "UTF-8";
+
+
+* {
+	 -webkit-font-smoothing: antialiased !important;
+	-moz-osx-font-smoothing: grayscale !important;
+	text-rendering: optimizeLegibility !important;
+
+	-webkit-text-shadow: 1px 1px 1px rgba(0,0,0,0.04);
+	   -moz-text-shadow: 1px 1px 1px rgba(0,0,0,0.04);
+			text-shadow: 1px 1px 1px rgba(0,0,0,0.04);
+	
+	font-smooth: always;
+}
+
+.main_font {
+	font-family: 'Ubuntu',
+				 'Aileron Light',
+				 'Century Gothic Light',
+				 'Calibri',
+				 'HelveticaNeue-Light',
+				 'Helvetica Neue Light',
+				 'Helvetica Neue',
+				 'Helvetica',
+				 'Arial',
+				 'Lucida Grande',
+				 sans-serif;
+}
+
+body {
+	max-width: 320px;
+	min-width: 320px;
+	width: 320px;
+}
+
+body {
+	margin-right: auto;
+	margin-left: auto;
+}
+
+body div#content {
+	background-color: #ccc;
+	border: 1px solid #555;
+	border-radius: 20px;
+
+	padding: 10px 10px 10px 10px;
+	margin-right: auto;
+	margin-left: auto;
+	min-height: 500px;
+	display: block;
+	width: 280px;
+}
+
+body div#content > span.title {
+	text-align: center;
+	font-weight: bold;
+	margin-top: 5px;
+	font-size: 2em;
+	display: block;
+	width: 100%;
+}
+
+body div#content > span.desc {
+	text-align: center;
+	font-size: 1.1em;
+	display: block;
+	width: 100%;
+}
+
+body div#content > span.desc.bot {
+	min-height: 100px;
+}
+
+body div#content > span#inner {
+	position: relative;
+	display: block;
+	width: 100%;
+}
+
+body div#content > span#inner div#overlay {
+	margin-top: calc(50% - 55px);
+	text-align: center;
+	position: absolute;
+	font-size: 1.5em;
+	display: block;
+	height: 50px;
+	width: 100%;
+}
+
+body div#content > button {
+	padding: 5px 5px 5px 5px;
+	background-color: #eee;
+	border: 1px solid #555;
+	border-radius: 10px;
+	cursor: pointer;
+	width: 90px;
+
+	opacity: 1;
+
+	-webkit-transition: all .4s;
+	   -moz-transition: all .4s;
+		-ms-transition: all .4s;
+		 -o-transition: all .4s;
+			transition: all .4s;
+}
+
+body div#content > button:hover {
+	background-color: #ccf;
+}
+
+body div#content > button:active {
+	background-color: #aaf;
+}
+
+body div#content > button.hidden {
+	cursor: default;
+	opacity: 0;
+}

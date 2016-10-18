@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html lang="en">
+	<head>
+	    <meta charset="utf-8"/>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0">
+	    <!--
+	   		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		-->
+		<meta name="author" content="Unknown6656"/>
+		<title>Ping-o-Meter</title>
+		<!-- IE -->
+		<link rel="shortcut icon" type="image/x-icon" href="./../favicon.ico"/>
+		<!-- other browsers -->
+		<link rel="icon" type="image/x-icon" href="./../favicon.ico"/>
+		<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu:regular,bold,italic&subset=Latin,Greek,Cyrillic">
+		<link rel="stylesheet" type="text/css" href="./css/main.css"/>
+
+		<!--[if lt IE 9]>
+			<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+	</head>
+	<body class="main_font">
+		<div id="content">
+			<span class="title">Ping-O-Meter</span>
+			<br/>
+			<span class="desc">
+				Auf einer Skala von 0 bis 100 - Wie langweilig ist diese Vorlesung?
+			</span>
+			<br/>
+			<span id="inner">
+				<div id="overlay">Max: <span id="max">0</span></div>
+				<input id="meter" value="0" data-width="280"
+											data-height="240"
+											data-fgColor="Black"
+											data-skin="tron"
+											data-readOnly="true"
+											data-linecap="round"
+											data-thickness="0.1"
+											data-min="0.0"
+											data-max="100.0"
+											data-step="0.1"
+											data-angleArc="250"
+											data-angleOffset="-125">
+			</span>
+			<span class="desc bot">
+				Diese Vorlesung <span id="vrb">ist</span> <span id="txt"></span>
+				<br/>
+				<br/>
+				(Ping: <span id="ms"></span>)
+			</span>
+			<button id="o" onclick="javascript:stop();" class="main_font hidden">STOP</button>
+			<button id="a" onclick="javascript:start();" class="main_font">START</button>
+			<button id="a" onclick="javascript:reset();" class="main_font">RESET</button>
+		</div>
+	</body>
+	<script type="text/javascript" language="javascript" src="./js/jquery-2.1.1.js"></script>
+	<script type="text/javascript" language="javascript" src="./js/plugin.js"></script>
+	<script type="text/javascript" language="javascript" src="./js/jquery.knob.js"></script>
+	<script type="text/javascript" language="javascript" src="./js/ping.js"></script>
+	<script type="text/javascript" language="javascript">
+
+		var url = "http://softwareinternational.de:80/ping/blank.png";
+		var i = null; // interval pointer
+		var q = [ 0 ]; // current values {0..100}
+		var p = new Ping();
+		var max = 6000.0; // maximum ping {ms}
+		var intv = 200; // {ms}
+		var oldping = 0;
+		var ne = false; // ne-flag
+		var rec = 0; // max value {0..100}
+		var cache = 15000; // {ms}
+
+		$("#meter").knob();
+		
+		start();
+		registerhandler();
+
+		function mainloop(data) {
+			var scaled = data == -1 ? 100 : (Math.min(data * 8, max) / max * 100.0).toFixed(1);
+			var oldval = $('#meter').val();
+
+			if (data != -1)
+			{
+				var total = 0;
+
+				q.push(scaled);
+
+				if (q.length >= cache / intv)
+					q.shift();
+
+				for (var i = 0; i < q.length; i++)
+					total += parseFloat(q[i]);
+
+				scaled = total / q.length;
+			}
+
+			var clr = getcolor(scaled);
+
+			$('div#content').css('background-color', getbgcolor(scaled));
+			// $('#meter').val(scaled);
+			// $('#meter').css('color', clr).trigger('change');
+			$('#meter').trigger(
+				'configure', {
+					"fgColor" : clr
+			});
+			$("#txt").html(getlabel(scaled));
+
+			$({ val : oldval}).animate({ val : scaled}, {
+				duration: intv,
+				easing: "swing", 
+				step: function() {
+					$("#meter").val(this.val).trigger("change");
+				}
+			});
+			$({ val : oldping}).animate({ val : data}, {
+				duration: intv,
+				easing: "swing",
+				step: function() {
+					if (this.val == -1)
+						$('#ms').html("&infin; years");
+					else if (this.val >= 1100)
+						$('#ms').html((this.val / 1000).toFixed(2) + " s");
+					else
+						$('#ms').html(Math.round(this.val) + " ms");
+				}
+			});
+
+			if (scaled > rec) {
+				$({ val : rec}).animate({ val : scaled}, {
+					duration: intv,
+					easing: "swing",
+					step: function() {
+						$('#max').html((this.val).toFixed(1));
+					}
+				});
+
+				rec = scaled;
+			}
+
+			setTimeout(function() {
+				oldping = data;
+			}, intv);
+		}
+
+		function getlabel(percentage) {
+			ne = false;
+
+			if (percentage <= 2) {
+				ne = true;
+
+				return "ausgefallen oder du bist im falschen Hörsaal!";
+			}
+			else if (percentage <= 5)
+				return "verdammt spannend.";
+			else if (percentage <= 10)
+				return "spannend.";
+			else if (percentage <= 15)
+				return "interessant.";
+			else if (percentage <= 20)
+				return "normal.";
+			else if (percentage <= 25)
+				return "ertagbar....";
+			else if (percentage <= 30)
+				return "mir doch Worsch...";
+			else if (percentage <= 45)
+				return "langweilig.";
+			else if (percentage <= 50)
+				return "verdammt langweilig (!)";
+			else if (percentage <= 60)
+				return "ätzend (!)";
+			else
+				return "DES TODES!?! O__o";
+		}
+
+		function getcolor(percentage) {
+			if (percentage <= 20)
+				return "#00" + chex(Math.round(percentage / 20.0 * 130.0) + 50) + "00";
+			else if (percentage <= 50)
+				return "#" + chex(Math.round((percentage - 20.0) / 30.0 * 210.0)) + "B400";
+			else
+				return "#D2" + chex(Math.round((100.0 - percentage) / 50.0 * 180.0)) + "00";
+		}
+
+		function getbgcolor(percentage) {
+			if (percentage <= 20)
+				return "#C0" + chex(Math.round(percentage / 20.0 * 0x3f) + 0xc0) + "C0";
+			else if (percentage <= 50)
+				return "#" + chex(Math.round((percentage - 20.0) / 30.0 * 0x3f) + 0xc0) + "FFC0";
+			else
+				return "#FF" + chex(Math.round((100.0 - percentage) / 50.0 * 0x3f) + 0xc0) + "C0";
+		}
+
+		function chex(number) {
+			var tmp = number.toString(16);
+
+			if (tmp.length == 1)
+				return "0" + tmp;
+			else
+				return tmp;
+		}
+
+		function start() {
+			if (i != null)
+				return;
+
+			$('#o').removeClass("hidden");
+			$('#a').addClass("hidden");
+			$('#vrb').html("ist");
+
+			i = setInterval(function() {
+				p.ping(url, mainloop);
+			}, intv);
+
+			p.ping(url, mainloop);
+		}
+
+		function reset() {
+			rec = 0;
+			q = [ 0 ];
+			oldping = 0;
+
+			$('div#content').css('background-color', getbgcolor(0));
+			$('#meter').val(0);
+			$('#meter').trigger('change');
+			$('#meter').trigger(
+				'configure', {
+					"fgColor" : getcolor(0)
+			});
+			$("#txt").html(getlabel(0));
+			$('#ms').html("0 ms");
+			$('#max').html(0);
+		}
+
+		function stop() {
+			clearInterval(i);
+
+			$('#o').addClass("hidden");
+			$('#a').removeClass("hidden");
+			$('#vrb').html(ne ? "ist" : "war");
+
+			i = null;
+		}
+
+		function registerhandler() {
+			var hidden, state, visibilityChange;
+			var def = true;
+
+			if (typeof document.hidden !== "undefined") {
+				hidden = "hidden";
+				visibilityChange = "visibilitychange";
+				state = "visibilityState";
+			} else if (typeof document.mozHidden !== "undefined") {
+				hidden = "mozHidden";
+				visibilityChange = "mozvisibilitychange";
+				state = "mozVisibilityState";
+			} else if (typeof document.msHidden !== "undefined") {
+				hidden = "msHidden";
+				visibilityChange = "msvisibilitychange";
+				state = "msVisibilityState";
+			} else if (typeof document.webkitHidden !== "undefined") {
+				hidden = "webkitHidden";
+				visibilityChange = "webkitvisibilitychange";
+				state = "webkitVisibilityState";
+			}
+			else
+				def = false;
+
+			if (def) {
+				var trg = function() {
+					if (document[state] == hidden)
+						stop();
+					else
+						start();
+				};
+
+				document.addEventListener(visibilityChange, trg, false);
+
+				trg();
+			}
+		}
+
+	</script>
+</html>
